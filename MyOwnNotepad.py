@@ -1,7 +1,7 @@
 import pygame, sys, os
 from pygame.locals import*
 
-## CONSTANTS, yo ##
+## CONSTANTS, yo ## 
 
 DISPLAYWIDTH  = 640
 DISPLAYHEIGHT = 480
