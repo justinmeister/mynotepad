@@ -41,27 +41,32 @@ TEXTCOLOR = BLACK
 
 
 def main():
-    global DISPLAYSURF, FPSCLOCK
+    global FPSCLOCK
     pygame.init()
     FPSCLOCK = pygame.time.Clock()
-    DISPLAYSURF = pygame.display.set_mode((DISPLAYWIDTH, DISPLAYHEIGHT))    
-    DISPLAYSURF.fill(BGCOLOR)
+    
+    
+    windowWidth  = 640
+    windowHeight = 480 
+    lineNumber   = 0
+    newChar      = ''
+    typeChar     = True
+    textString   = ''
+    mainList     = []
+    mainList.append(textString)
+    deleteKey    = False
+    returnKey    = False
+    insertPoint  = 0
+    camerax      = 0
+    cameray      = 0
+    
+    displaySurf = pygame.display.set_mode((windowWidth, windowHeight), RESIZABLE)    
+    displaySurf.fill(BGCOLOR)
     pygame.display.set_caption('Notepad')
     mainFont = pygame.font.SysFont('Helvetica', TEXTHEIGHT)
-
-    lineNumber = 0
-    newChar = ''
-    typeChar = True
-    textString = ''
-    mainList = []
-    mainList.append(textString)
-    deleteKey = False
-    returnKey = False
-    insertPoint = 0
-    camerax = 0
-    cameray = 0
+    
     cursorRect = getCursorRect(STARTX, setCursorY(lineNumber), mainFont, camerax, cameray)
-    pygame.display.update()
+    ##pygame.display.update()
 
 
 ## The main game loop detects user input, displays the text on the screen,
@@ -70,12 +75,16 @@ def main():
     
     while True:
 
-        newChar, typeChar, deleteKey, returnKey, directionKey = getInput()
+        camerax, cameray = adjustCamera(mainList, lineNumber, insertPoint, cursorRect, mainFont, camerax, cameray, windowWidth, windowHeight)
 
         
-        mainList, lineNumber, insertPoint, cursorRect, camerax, cameray = displayText(mainFont, newChar, typeChar, mainList, deleteKey, returnKey, lineNumber, insertPoint, directionKey, camerax, cameray, cursorRect)
 
-        displayInsertPoint(insertPoint, mainFont, cursorRect, camerax)
+        newChar, typeChar, deleteKey, returnKey, directionKey, windowWidth, windowHeight = getInput(windowWidth, windowHeight)
+
+        
+        mainList, lineNumber, insertPoint, cursorRect, camerax, cameray = displayText(mainFont, newChar, typeChar, mainList, deleteKey, returnKey, lineNumber, insertPoint, directionKey, camerax, cameray, cursorRect, windowWidth, windowHeight, displaySurf)
+
+        displayInsertPoint(insertPoint, mainFont, cursorRect, camerax, windowWidth, windowHeight, displaySurf)
 
         
         pygame.display.update()
@@ -87,9 +96,7 @@ def main():
 ## and cursorRect accordingly.  There is a function called blitAll()
 ## which blits all strings to the main surface.
 
-def displayText(mainFont, newChar, typeChar, mainList, deleteKey, returnKey, lineNumber, insertPoint, directionKey, camerax, cameray, cursorRect):
-
-    camerax, cameray = adjustCamera(mainList, lineNumber, insertPoint, cursorRect, mainFont, camerax, cameray)
+def displayText(mainFont, newChar, typeChar, mainList, deleteKey, returnKey, lineNumber, insertPoint, directionKey, camerax, cameray, cursorRect, windowWidth, windowHeight, displaySurf):
     
     if returnKey:
         firstString = getStringAtInsertPoint(mainList, lineNumber, insertPoint)
@@ -256,10 +263,10 @@ def displayText(mainFont, newChar, typeChar, mainList, deleteKey, returnKey, lin
     
     
     if cursorRect.left >= XMARGIN:
-        if cursorRect.right <= (DISPLAYWIDTH - XMARGIN):
+        if cursorRect.right <= (windowWidth - XMARGIN):
             if cursorRect.top >= YMARGIN:
-                if cursorRect.bottom <= (DISPLAYHEIGHT - YMARGIN):
-                    blitAll(mainList, mainFont, camerax, cameray, cursorRect)
+                if cursorRect.bottom <= (windowHeight - YMARGIN):
+                    blitAll(mainList, mainFont, camerax, cameray, cursorRect, displaySurf)
 
     
 
@@ -272,8 +279,8 @@ def displayText(mainFont, newChar, typeChar, mainList, deleteKey, returnKey, lin
 ##################################################################
 
 
-def blitAll(mainList, mainFont, camerax, cameray, cursorRect):
-    DISPLAYSURF.fill(BGCOLOR)
+def blitAll(mainList, mainFont, camerax, cameray, cursorRect, displaySurf):
+    displaySurf.fill(BGCOLOR)
 
 
     i = 0
@@ -282,22 +289,22 @@ def blitAll(mainList, mainFont, camerax, cameray, cursorRect):
         stringRect = stringRender.get_rect()
         stringRect.x = STARTX - camerax
         stringRect.y = STARTY + (i * (TEXTHEIGHT + (TEXTHEIGHT/4))) - cameray
-        DISPLAYSURF.blit(stringRender, stringRect)
+        displaySurf.blit(stringRender, stringRect)
         i += 1
 
-    drawCursor(mainFont, cursorRect)
+    drawCursor(mainFont, cursorRect, displaySurf)
 
 
     
 
 
-def adjustCamera(mainList, lineNumber, insertPoint, cursorRect, mainFont, camerax, cameray):
+def adjustCamera(mainList, lineNumber, insertPoint, cursorRect, mainFont, camerax, cameray, windowWidth, windowHeight):
 
     stringRect = getStringRectAtInsertPoint(mainList, lineNumber, insertPoint, mainFont, camerax, cameray)
     
     
-    if (stringRect.right + cursorRect.width) > (DISPLAYWIDTH - XMARGIN):
-        camerax += ((stringRect.right + cursorRect.width) - (DISPLAYWIDTH - XMARGIN))
+    if (stringRect.right + cursorRect.width) > (windowWidth - XMARGIN):
+        camerax += ((stringRect.right + cursorRect.width) - (windowWidth - XMARGIN))
         
 
     elif cursorRect.left < XMARGIN:
@@ -311,8 +318,8 @@ def adjustCamera(mainList, lineNumber, insertPoint, cursorRect, mainFont, camera
         elif camerax < 0:
             camerax = 0
 
-    if ((stringRect.bottom > (DISPLAYHEIGHT - YMARGIN))):
-        cameray += (stringRect.bottom) - (DISPLAYHEIGHT - YMARGIN)
+    if ((stringRect.bottom > (windowHeight - YMARGIN))):
+        cameray += (stringRect.bottom) - (windowHeight - YMARGIN)
 
     elif (stringRect.top < YMARGIN):
         if stringRect.top < 0:
@@ -333,23 +340,24 @@ def adjustCamera(mainList, lineNumber, insertPoint, cursorRect, mainFont, camera
 
 
 
-def drawCursor(mainFont, cursorRect):
+def drawCursor(mainFont, cursorRect, displaySurf):
 
     cursor = mainFont.render('l', True, RED, RED)
 
-    DISPLAYSURF.blit(cursor, cursorRect)
+    displaySurf.blit(cursor, cursorRect)
     
 
 
 
 
-def getInput():
+def getInput(windowWidth, windowHeight):
     
     newChar = False
     typeChar = False
     deleteKey = False
     returnKey = False
     directionKey = False
+    
     
     for event in pygame.event.get():
         if event.type == QUIT:
@@ -386,10 +394,16 @@ def getInput():
             else:
                 newChar = event.unicode
                 typeChar = True
+
+        elif event.type == VIDEORESIZE:
+            displaySurf = pygame.display.set_mode(event.dict['size'], DOUBLEBUF|RESIZABLE)
+            displaySurf.fill(WHITE)
+            windowWidth = event.dict['w']
+            windowHeight = event.dict['h']
                 
                 
 
-    return newChar, typeChar, deleteKey, returnKey, directionKey
+    return newChar, typeChar, deleteKey, returnKey, directionKey, windowWidth, windowHeight
 
 
 ## These functions involve the string the cursor happens to be on.
@@ -448,27 +462,34 @@ def getCursorRect(cursorX, cursorY, mainFont, camerax, cameray):
     return cursorRect
 
 
-def displayInsertPoint(insertPoint, mainFont, cursorRect, camerax):
+def displayInsertPoint(insertPoint, mainFont, cursorRect, camerax, windowWidth, windowHeight, displaySurf):
     number = mainFont.render(str(insertPoint), True, TEXTCOLOR, BGCOLOR)
     numbRect = number.get_rect()
-    numbRect.bottom = DISPLAYHEIGHT
-    numbRect.right = DISPLAYWIDTH
+    numbRect.bottom = windowHeight
+    numbRect.right = windowWidth
 
-    DISPLAYSURF.blit(number, numbRect)
+    displaySurf.blit(number, numbRect)
 
     cursor = mainFont.render(str(cursorRect.x) + '  ', True, TEXTCOLOR, BGCOLOR)
     cursorNewRect = cursor.get_rect()
-    cursorNewRect.bottom = DISPLAYHEIGHT
+    cursorNewRect.bottom = windowHeight
     cursorNewRect.right = numbRect.left
 
-    DISPLAYSURF.blit(cursor, cursorNewRect)
+    displaySurf.blit(cursor, cursorNewRect)
 
-    camerax = mainFont.render(str(camerax) + '    ', True, TEXTCOLOR, BGCOLOR)
-    cameraRect = camerax.get_rect()
-    cameraRect.bottom = DISPLAYHEIGHT
+    cameraxRender = mainFont.render(str(camerax) + '    ', True, TEXTCOLOR, BGCOLOR)
+    cameraRect = cameraxRender.get_rect()
+    cameraRect.bottom = windowHeight
     cameraRect.right = cursorNewRect.left
 
-    DISPLAYSURF.blit(camerax, cameraRect)
+    displaySurf.blit(cameraxRender, cameraRect)
+
+    windowWidthRender = mainFont.render(str(windowWidth) + '    ', True, TEXTCOLOR, BGCOLOR)
+    windowRect = windowWidthRender.get_rect()
+    windowRect.bottom = windowHeight
+    windowRect.right = cameraRect.left
+
+    displaySurf.blit(windowWidthRender, windowRect)
 
 
 def setCursorY(lineNumber):
