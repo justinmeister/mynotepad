@@ -50,7 +50,7 @@ def main():
     windowHeight = 480 
     lineNumber   = 0
     newChar      = ''
-    typeChar     = True
+    typeChar     = False
     textString   = ''
     mainList     = []
     mainList.append(textString)
@@ -59,15 +59,17 @@ def main():
     insertPoint  = 0
     camerax      = 0
     cameray      = 0
+    mouseClicked = False
+    mouseX       = 0
+    mouseY       = 0
     
-    displaySurf = pygame.display.set_mode((windowWidth, windowHeight), RESIZABLE)    
+    displaySurf = pygame.display.set_mode((windowWidth, windowHeight), RESIZABLE|DOUBLEBUF|HWSURFACE)    
     displaySurf.fill(BGCOLOR)
     pygame.display.set_caption('Notepad')
     mainFont = pygame.font.SysFont('Helvetica', TEXTHEIGHT)
     
-    cursorRect = getCursorRect(STARTX, setCursorY(lineNumber), mainFont, camerax, cameray)
-    ##pygame.display.update()
-
+    cursorRect = getCursorRect(STARTX, STARTY + (TEXTHEIGHT + (TEXTHEIGHT/4)), mainFont, camerax, cameray)
+    
 
 ## The main game loop detects user input, displays the text on the screen,
 ## displays the cursor on the screen, and adjusts the camera view if
@@ -79,12 +81,12 @@ def main():
 
         
 
-        newChar, typeChar, deleteKey, returnKey, directionKey, windowWidth, windowHeight = getInput(windowWidth, windowHeight)
+        newChar, typeChar, deleteKey, returnKey, directionKey, windowWidth, windowHeight, mouseX, mouseY, mouseClicked = getInput(windowWidth, windowHeight)
 
         
-        mainList, lineNumber, insertPoint, cursorRect, camerax, cameray = displayText(mainFont, newChar, typeChar, mainList, deleteKey, returnKey, lineNumber, insertPoint, directionKey, camerax, cameray, cursorRect, windowWidth, windowHeight, displaySurf)
+        mainList, lineNumber, insertPoint, cursorRect = displayText(mainFont, newChar, typeChar, mainList, deleteKey, returnKey, lineNumber, insertPoint, directionKey, camerax, cameray, cursorRect, windowWidth, windowHeight, displaySurf, mouseClicked, mouseX, mouseY)
 
-        displayInsertPoint(insertPoint, mainFont, cursorRect, camerax, windowWidth, windowHeight, displaySurf)
+        displayInfo(insertPoint, mainFont, cursorRect, camerax, windowWidth, windowHeight, displaySurf)
 
         
         pygame.display.update()
@@ -96,7 +98,7 @@ def main():
 ## and cursorRect accordingly.  There is a function called blitAll()
 ## which blits all strings to the main surface.
 
-def displayText(mainFont, newChar, typeChar, mainList, deleteKey, returnKey, lineNumber, insertPoint, directionKey, camerax, cameray, cursorRect, windowWidth, windowHeight, displaySurf):
+def displayText(mainFont, newChar, typeChar, mainList, deleteKey, returnKey, lineNumber, insertPoint, directionKey, camerax, cameray, cursorRect, windowWidth, windowHeight, displaySurf, mouseClicked, mouseX, mouseY):
     
     if returnKey:
         firstString = getStringAtInsertPoint(mainList, lineNumber, insertPoint)
@@ -109,6 +111,10 @@ def displayText(mainFont, newChar, typeChar, mainList, deleteKey, returnKey, lin
         cursorRect.x = STARTX
         stringRect = getStringRectAtInsertPoint(mainList, lineNumber, insertPoint, mainFont, camerax, cameray)
         cursorRect.y = stringRect.top
+
+    elif mouseClicked:
+        insertPoint, lineNumber, cursorRect = setCursorToClick(mainList, cursorRect, mainFont, camerax, cameray, mouseX, mouseY)
+        
 
 
     elif directionKey:
@@ -152,15 +158,22 @@ def displayText(mainFont, newChar, typeChar, mainList, deleteKey, returnKey, lin
                 if len(mainList) > (lineNumber + 1):
                     lineNumber += 1
                     insertPoint = 0
-                    cursorRect.x = STARTX
                     stringRect = getStringRectAtInsertPoint(mainList, lineNumber, insertPoint, mainFont, camerax, cameray)
+                    cursorRect.x = stringRect.right
                     cursorRect.y = stringRect.top
                     
                 
 
         elif directionKey == UP:
             if lineNumber > 0:
-                if insertPoint > len(mainList[lineNumber - 1]):
+                if insertPoint == 0:
+                    lineNumber -= 1
+                    stringRect = getStringRectAtInsertPoint(mainList, lineNumber, insertPoint, mainFont, camerax, cameray)
+                    cursorRect.x = STARTX
+                    cursorRect.y = stringRect.top
+                    
+                
+                elif insertPoint > len(mainList[lineNumber - 1]):
                     lineNumber -= 1
                     insertPoint = len(mainList[lineNumber])
                     stringRect = getStringRectAtInsertPoint(mainList, lineNumber, insertPoint, mainFont, camerax, cameray)
@@ -178,7 +191,13 @@ def displayText(mainFont, newChar, typeChar, mainList, deleteKey, returnKey, lin
 
         elif directionKey == DOWN:
             if lineNumber + 1 < len(mainList):
-                if insertPoint > len(mainList[lineNumber + 1]):
+                if insertPoint == 0:
+                    lineNumber += 1
+                    stringRect = getStringRectAtInsertPoint(mainList, lineNumber, insertPoint, mainFont, camerax, cameray)
+                    cursorRect.x = STARTX
+                    cursorRect.y = stringRect.top
+                    
+                elif insertPoint > len(mainList[lineNumber + 1]):
                     lineNumber +=1
                     insertPoint = len(mainList[lineNumber])
                     stringRect = getStringRectAtInsertPoint(mainList, lineNumber, insertPoint, mainFont, camerax, cameray)
@@ -270,7 +289,7 @@ def displayText(mainFont, newChar, typeChar, mainList, deleteKey, returnKey, lin
 
     
 
-    return mainList, lineNumber, insertPoint, cursorRect, camerax, cameray
+    return mainList, lineNumber, insertPoint, cursorRect
 
 
 ##################################################################
@@ -357,6 +376,9 @@ def getInput(windowWidth, windowHeight):
     deleteKey = False
     returnKey = False
     directionKey = False
+    mouseX = 0
+    mouseY = 0
+    mouseClicked = False
     
     
     for event in pygame.event.get():
@@ -400,10 +422,14 @@ def getInput(windowWidth, windowHeight):
             displaySurf.fill(WHITE)
             windowWidth = event.dict['w']
             windowHeight = event.dict['h']
+
+        elif event.type == MOUSEBUTTONDOWN:
+            mouseX, mouseY = event.pos
+            mouseClicked = True
                 
                 
 
-    return newChar, typeChar, deleteKey, returnKey, directionKey, windowWidth, windowHeight
+    return newChar, typeChar, deleteKey, returnKey, directionKey, windowWidth, windowHeight, mouseX, mouseY, mouseClicked
 
 
 ## These functions involve the string the cursor happens to be on.
@@ -462,7 +488,7 @@ def getCursorRect(cursorX, cursorY, mainFont, camerax, cameray):
     return cursorRect
 
 
-def displayInsertPoint(insertPoint, mainFont, cursorRect, camerax, windowWidth, windowHeight, displaySurf):
+def displayInfo(insertPoint, mainFont, cursorRect, camerax, windowWidth, windowHeight, displaySurf):
     number = mainFont.render(str(insertPoint), True, TEXTCOLOR, BGCOLOR)
     numbRect = number.get_rect()
     numbRect.bottom = windowHeight
@@ -496,6 +522,66 @@ def setCursorY(lineNumber):
     y = STARTY + (lineNumber * (TEXTHEIGHT + (TEXTHEIGHT/4)))
     return y
 
+
+
+
+## These three functions, setCursorToClick(), getLineNumberOfClick(), and
+## get insertPointAtMouseX() allow the user to set the cursor location
+## by clicking the mouse at the spot they want to go.
+
+def setCursorToClick(mainList, cursorRect, mainFont, camerax, cameray, mouseX, mouseY):
+    lineNumber = getLineNumberOfClick(mouseY, cameray, mainList)
+    
+    insertPoint = getInsertPointAtMouseX(mouseX, lineNumber, mainList, mainFont, camerax, cameray)
+    stringRect = getStringRectAtInsertPoint(mainList, lineNumber, insertPoint, mainFont, camerax, cameray)
+
+    if insertPoint == 0:
+        cursorRect.x = STARTX
+    elif insertPoint > 0:
+        cursorRect.x = stringRect.right
+        
+    cursorRect.y = stringRect.top
+
+
+    return insertPoint, lineNumber, cursorRect
+
+
+def getLineNumberOfClick(mouseY, cameray, mainList):
+    clickLineNumber = ((mouseY + cameray + YMARGIN) / (TEXTHEIGHT+ (TEXTHEIGHT/4)))
+    if clickLineNumber > len(mainList):
+        lineNumber = (len(mainList)) - 1
+    elif clickLineNumber <= len(mainList):
+        lineNumber = clickLineNumber -1
+
+    return lineNumber
+
+
+def getInsertPointAtMouseX(mouseX, lineNumber, mainList, mainFont, camerax, cameray):
+
+    string = mainList[lineNumber]
+
+    newInsertPoint = 0
+
+    if mouseX < XMARGIN:
+        return newInsertPoint
+    
+    for insertPoint in string:
+        stringRect = getStringRectAtInsertPoint(mainList, lineNumber, newInsertPoint, mainFont, camerax, cameray)
+
+        if mouseX >= stringRect.left:
+            if mouseX < stringRect.right:
+                if newInsertPoint > 0:
+                    return newInsertPoint - 1
+
+        newInsertPoint += 1
+
+    else:
+        return newInsertPoint
+
+
+
+
+    
 
 
 if __name__ == '__main__':
