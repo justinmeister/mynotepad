@@ -1,4 +1,4 @@
-import pygame, sys, os
+import pygame, sys, os, math
 from pygame.locals import*
 
 ## CONSTANTS, yo ## 
@@ -516,8 +516,9 @@ def displayInfo(insertPoint, mainFont, cursorRect, camerax, windowWidth, windowH
 
 def setCursorToClick(mainList, cursorRect, mainFont, camerax, cameray, mouseX, mouseY):
     lineNumber = getLineNumberOfClick(mouseY, cameray, mainList)
+
     
-    insertPoint = getInsertPointAtMouseX(mouseX, lineNumber, mainList, mainFont, camerax, cameray)
+    insertPoint = getInsertPointAtMouseX(mouseX, mouseY, lineNumber, mainList, mainFont, camerax, cameray)
     stringRect = getStringRectAtInsertPoint(mainList, lineNumber, insertPoint, mainFont, camerax, cameray)
 
     if insertPoint == 0:
@@ -532,20 +533,25 @@ def setCursorToClick(mainList, cursorRect, mainFont, camerax, cameray, mouseX, m
 
 
 def getLineNumberOfClick(mouseY, cameray, mainList):
-    clickLineNumber = ((mouseY + cameray) / (TEXTHEIGHT+ (TEXTHEIGHT/4)))
+    clickLineNumber = (mouseY + cameray) / float(TEXTHEIGHT+ (TEXTHEIGHT/4))
     if clickLineNumber > len(mainList):
         lineNumber = (len(mainList)) - 1
     elif clickLineNumber <= len(mainList):
-        lineNumber = clickLineNumber -1
+        floorLineNumber = math.floor(clickLineNumber)
+        lineNumber = int(floorLineNumber)
 
     return lineNumber
 
 
-def getInsertPointAtMouseX(mouseX, lineNumber, mainList, mainFont, camerax, cameray):
+def getInsertPointAtMouseX(mouseX, mouseY, lineNumber, mainList, mainFont, camerax, cameray):
 
     string = mainList[lineNumber]
 
     newInsertPoint = 0
+
+    if (mouseY + cameray) > ((lineNumber + 1) * (TEXTHEIGHT + TEXTHEIGHT/4)):
+        insertPoint = len(mainList[lineNumber])
+        return insertPoint
 
     
     for insertPoint in string:
