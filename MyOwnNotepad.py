@@ -6,11 +6,11 @@ from pygame.locals import*
 DISPLAYWIDTH  = 640
 DISPLAYHEIGHT = 480
 FPS          = 30
-XMARGIN      = 10
-YMARGIN      = 10
+
+
 TEXTHEIGHT   = 20
-STARTX       = XMARGIN
-STARTY       = YMARGIN
+STARTX       = 0
+STARTY       = 0
 
 LEFT = 'left'
 RIGHT = 'right'
@@ -124,7 +124,7 @@ def displayText(mainFont, newChar, typeChar, mainList, deleteKey, returnKey, lin
                     insertPoint -= 1
                     stringRect = getStringRectAtInsertPoint(mainList, lineNumber, insertPoint, mainFont, camerax, cameray)
                     cursorRect.x = stringRect.right
-                    cursorRect.y = YMARGIN
+                    cursorRect.y = STARTY
                     
             elif lineNumber > 0:
                 if insertPoint == 0:
@@ -272,7 +272,7 @@ def displayText(mainFont, newChar, typeChar, mainList, deleteKey, returnKey, lin
         elif insertPoint > 0:
             cursorRect.x = stringRect.right
         if lineNumber == 0:
-            cursorRect.y = YMARGIN
+            cursorRect.y = STARTY
         elif lineNumber > 0:
             cursorRect.y = stringRect.top
         else:
@@ -281,10 +281,10 @@ def displayText(mainFont, newChar, typeChar, mainList, deleteKey, returnKey, lin
 
     
     
-    if cursorRect.left >= XMARGIN:
-        if cursorRect.right <= (windowWidth - XMARGIN):
-            if cursorRect.top >= YMARGIN:
-                if cursorRect.bottom <= (windowHeight - YMARGIN):
+    if cursorRect.left >= STARTX:
+        if cursorRect.right <= windowWidth:
+            if cursorRect.top >= STARTY:
+                if cursorRect.bottom <= (windowHeight - STARTY):
                     blitAll(mainList, mainFont, camerax, cameray, cursorRect, displaySurf)
 
     
@@ -322,29 +322,20 @@ def adjustCamera(mainList, lineNumber, insertPoint, cursorRect, mainFont, camera
     stringRect = getStringRectAtInsertPoint(mainList, lineNumber, insertPoint, mainFont, camerax, cameray)
     
     
-    if (stringRect.right + cursorRect.width) > (windowWidth - XMARGIN):
-        camerax += ((stringRect.right + cursorRect.width) - (windowWidth - XMARGIN))
+    if (stringRect.right + cursorRect.width) > windowWidth:
+        camerax += (stringRect.right + cursorRect.width) - windowWidth
         
 
-    elif cursorRect.left < XMARGIN:
-        if camerax > 0:
-            if cursorRect.left < 0:
-                adjustAmount = ((-1)*(cursorRect.left)) + XMARGIN
-                camerax -= adjustAmount
-            elif cursorRect.left > 0:
-                adjustAmount = XMARGIN - cursorRect.left
-                camerax -= adjustAmount
-        elif camerax < 0:
-            camerax = 0
+    elif cursorRect.left < STARTX:
+        camerax -= (-1)*(cursorRect.left)
 
-    if ((stringRect.bottom > (windowHeight - YMARGIN))):
-        cameray += (stringRect.bottom) - (windowHeight - YMARGIN)
 
-    elif (stringRect.top < YMARGIN):
-        if stringRect.top < 0:
-            cameray -= (-1)*(stringRect.top) + YMARGIN
-        else:
-            cameray -= YMARGIN - stringRect.top
+    if ((stringRect.bottom > (windowHeight))):
+        cameray += (stringRect.bottom) - (windowHeight)
+
+    elif (stringRect.top < 0):
+        cameray -= (-1)*(stringRect.top)
+            
           
 
     if insertPoint == 0:
@@ -518,12 +509,6 @@ def displayInfo(insertPoint, mainFont, cursorRect, camerax, windowWidth, windowH
     displaySurf.blit(windowWidthRender, windowRect)
 
 
-def setCursorY(lineNumber):
-    y = STARTY + (lineNumber * (TEXTHEIGHT + (TEXTHEIGHT/4)))
-    return y
-
-
-
 
 ## These three functions, setCursorToClick(), getLineNumberOfClick(), and
 ## get insertPointAtMouseX() allow the user to set the cursor location
@@ -547,7 +532,7 @@ def setCursorToClick(mainList, cursorRect, mainFont, camerax, cameray, mouseX, m
 
 
 def getLineNumberOfClick(mouseY, cameray, mainList):
-    clickLineNumber = ((mouseY + cameray + YMARGIN) / (TEXTHEIGHT+ (TEXTHEIGHT/4)))
+    clickLineNumber = ((mouseY + cameray) / (TEXTHEIGHT+ (TEXTHEIGHT/4)))
     if clickLineNumber > len(mainList):
         lineNumber = (len(mainList)) - 1
     elif clickLineNumber <= len(mainList):
@@ -562,8 +547,6 @@ def getInsertPointAtMouseX(mouseX, lineNumber, mainList, mainFont, camerax, came
 
     newInsertPoint = 0
 
-    if mouseX < XMARGIN:
-        return newInsertPoint
     
     for insertPoint in string:
         stringRect = getStringRectAtInsertPoint(mainList, lineNumber, newInsertPoint, mainFont, camerax, cameray)
