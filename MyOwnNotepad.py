@@ -6,12 +6,9 @@ from pygame.locals import*
 DISPLAYWIDTH  = 640
 DISPLAYHEIGHT = 480
 FPS          = 30
-
-
 TEXTHEIGHT   = 20
 STARTX       = 0
 STARTY       = 0
-
 LEFT = 'left'
 RIGHT = 'right'
 UP = 'up'
@@ -33,18 +30,14 @@ CYAN     = (  0, 255, 255)
 BLACK    = (  0,   0,   0)
 COMBLUE  = (233, 232, 255)
 
-
 BGCOLOR = WHITE
 TEXTCOLOR = BLACK
-
-
 
 
 def main():
     global FPSCLOCK
     pygame.init()
     FPSCLOCK = pygame.time.Clock()
-    
     
     windowWidth  = 640
     windowHeight = 480 
@@ -76,19 +69,11 @@ def main():
 ## necessary.
     
     while True:
-
         camerax, cameray = adjustCamera(mainList, lineNumber, insertPoint, cursorRect, mainFont, camerax, cameray, windowWidth, windowHeight)
-
-        
-
         newChar, typeChar, deleteKey, returnKey, directionKey, windowWidth, windowHeight, mouseX, mouseY, mouseClicked = getInput(windowWidth, windowHeight)
-
-        
         mainList, lineNumber, insertPoint, cursorRect = displayText(mainFont, newChar, typeChar, mainList, deleteKey, returnKey, lineNumber, insertPoint, directionKey, camerax, cameray, cursorRect, windowWidth, windowHeight, displaySurf, mouseClicked, mouseX, mouseY)
-
         displayInfo(insertPoint, mainFont, cursorRect, camerax, windowWidth, windowHeight, displaySurf)
 
-        
         pygame.display.update()
         FPSCLOCK.tick(FPS)
 
@@ -99,7 +84,6 @@ def main():
 ## which blits all strings to the main surface.
 
 def displayText(mainFont, newChar, typeChar, mainList, deleteKey, returnKey, lineNumber, insertPoint, directionKey, camerax, cameray, cursorRect, windowWidth, windowHeight, displaySurf, mouseClicked, mouseX, mouseY):
-    
     if returnKey:
         firstString = getStringAtInsertPoint(mainList, lineNumber, insertPoint)
         secondString = getStringAfterInsertPoint(mainList, lineNumber, insertPoint)
@@ -111,11 +95,9 @@ def displayText(mainFont, newChar, typeChar, mainList, deleteKey, returnKey, lin
         cursorRect.x = STARTX
         stringRect = getStringRectAtInsertPoint(mainList, lineNumber, insertPoint, mainFont, camerax, cameray)
         cursorRect.y = stringRect.top
-
+        
     elif mouseClicked:
         insertPoint, lineNumber, cursorRect = setCursorToClick(mainList, cursorRect, mainFont, camerax, cameray, mouseX, mouseY)
-        
-
 
     elif directionKey:
         if directionKey == LEFT:
@@ -145,8 +127,6 @@ def displayText(mainFont, newChar, typeChar, mainList, deleteKey, returnKey, lin
                         cursorRect.x = stringRect.right
                         cursorRect.y = stringRect.top
                     
-                    
-
         elif directionKey == RIGHT:
             if insertPoint < len(mainList[lineNumber]):
                 insertPoint += 1
@@ -162,8 +142,6 @@ def displayText(mainFont, newChar, typeChar, mainList, deleteKey, returnKey, lin
                     cursorRect.x = stringRect.right
                     cursorRect.y = stringRect.top
                     
-                
-
         elif directionKey == UP:
             if lineNumber > 0:
                 if insertPoint == 0:
@@ -172,23 +150,19 @@ def displayText(mainFont, newChar, typeChar, mainList, deleteKey, returnKey, lin
                     cursorRect.x = STARTX
                     cursorRect.y = stringRect.top
                     
-                
                 elif insertPoint > len(mainList[lineNumber - 1]):
                     lineNumber -= 1
                     insertPoint = len(mainList[lineNumber])
                     stringRect = getStringRectAtInsertPoint(mainList, lineNumber, insertPoint, mainFont, camerax, cameray)
                     cursorRect.x = stringRect.right
                     cursorRect.y = stringRect.top
-                    
-                    
+                      
                 elif insertPoint <= len(mainList[lineNumber -1]):
                     lineNumber -= 1
                     stringRect = getStringRectAtInsertPoint(mainList, lineNumber, insertPoint, mainFont, camerax, cameray)
                     cursorRect.x = stringRect.right
                     cursorRect.y = stringRect.top
                     
-                    
-
         elif directionKey == DOWN:
             if lineNumber + 1 < len(mainList):
                 if insertPoint == 0:
@@ -209,8 +183,6 @@ def displayText(mainFont, newChar, typeChar, mainList, deleteKey, returnKey, lin
                     cursorRect.x = stringRect.right
                     cursorRect.y = stringRect.top
                     
-                    
-
     elif typeChar:
         string = mainList[lineNumber]
         stringList = list(string)
@@ -232,8 +204,6 @@ def displayText(mainFont, newChar, typeChar, mainList, deleteKey, returnKey, lin
             cursorRect.x = stringRect.right
             cursorRect.y = stringRect.top
 
-
-
     elif deleteKey:
         
         if insertPoint > 0:
@@ -250,8 +220,7 @@ def displayText(mainFont, newChar, typeChar, mainList, deleteKey, returnKey, lin
             stringRect = getStringRectAtInsertPoint(mainList, lineNumber, insertPoint, mainFont, camerax, cameray)
             cursorRect.x = stringRect.right
             cursorRect.y = stringRect.top
-                    
-                    
+                                
         elif insertPoint <= 0:
             if lineNumber > 0:
                 string = getStringAfterInsertPoint(mainList, lineNumber, insertPoint)
@@ -278,19 +247,13 @@ def displayText(mainFont, newChar, typeChar, mainList, deleteKey, returnKey, lin
         else:
             cursorRect.x = stringRect.right
 
-
-    
-    
     if cursorRect.left >= STARTX:
         if cursorRect.right <= windowWidth:
             if cursorRect.top >= STARTY:
                 if cursorRect.bottom <= (windowHeight - STARTY):
                     blitAll(mainList, mainFont, camerax, cameray, cursorRect, displaySurf)
 
-    
-
     return mainList, lineNumber, insertPoint, cursorRect
-
 
 ##################################################################
 ## Blits all the strings in mainList to the main surface object 
@@ -300,9 +263,8 @@ def displayText(mainFont, newChar, typeChar, mainList, deleteKey, returnKey, lin
 
 def blitAll(mainList, mainFont, camerax, cameray, cursorRect, displaySurf):
     displaySurf.fill(BGCOLOR)
-
-
     i = 0
+    
     for string in mainList:  ##blitting all the strings in the mainList by iterating through them
         stringRender = mainFont.render(string, True, TEXTCOLOR, BGCOLOR)
         stringRect = stringRender.get_rect()
@@ -314,54 +276,34 @@ def blitAll(mainList, mainFont, camerax, cameray, cursorRect, displaySurf):
     drawCursor(mainFont, cursorRect, displaySurf)
 
 
-    
-
-
 def adjustCamera(mainList, lineNumber, insertPoint, cursorRect, mainFont, camerax, cameray, windowWidth, windowHeight):
 
     stringRect = getStringRectAtInsertPoint(mainList, lineNumber, insertPoint, mainFont, camerax, cameray)
     
-    
     if (stringRect.right + cursorRect.width) > windowWidth:
-        camerax += (stringRect.right + cursorRect.width) - windowWidth
-        
-
+        camerax += (stringRect.right + cursorRect.width) - windowWidth  
     elif cursorRect.left < STARTX:
         camerax -= (-1)*(cursorRect.left)
 
-
-    if ((stringRect.bottom > (windowHeight))):
-        cameray += (stringRect.bottom) - (windowHeight)
-
-    elif (stringRect.top < 0):
+    if stringRect.bottom > windowHeight:
+        cameray += stringRect.bottom - windowHeight
+    elif stringRect.top < 0:
         cameray -= (-1)*(stringRect.top)
-            
-          
-
+               
     if insertPoint == 0:
         camerax = 0
-
     if lineNumber == 0:
         cameray = 0
 
     return camerax, cameray
     
 
-
-
-
 def drawCursor(mainFont, cursorRect, displaySurf):
-
     cursor = mainFont.render('l', True, RED, RED)
-
     displaySurf.blit(cursor, cursorRect)
     
 
-
-
-
 def getInput(windowWidth, windowHeight):
-    
     newChar = False
     typeChar = False
     deleteKey = False
@@ -371,7 +313,6 @@ def getInput(windowWidth, windowHeight):
     mouseY = 0
     mouseClicked = False
     
-    
     for event in pygame.event.get():
         if event.type == QUIT:
             pygame.quit()
@@ -380,30 +321,22 @@ def getInput(windowWidth, windowHeight):
         elif event.type == KEYDOWN:
             if event.key == K_BACKSPACE:
                 deleteKey = True
-
             elif event.key == K_ESCAPE:
                 pygame.quit()
                 sys.exit()
-                
             elif event.key == K_RETURN:
                 returnKey = True
-                
             elif event.key == K_TAB:
                 newChar = '    '
                 typeChar = True
-
             elif event.key == K_LEFT:
                 directionKey = LEFT
-
             elif event.key == K_RIGHT:
                 directionKey = RIGHT
-
             elif event.key == K_UP:
                 directionKey = UP
-
             elif event.key == K_DOWN:
                 directionKey = DOWN
-            
             else:
                 newChar = event.unicode
                 typeChar = True
@@ -413,13 +346,10 @@ def getInput(windowWidth, windowHeight):
             displaySurf.fill(WHITE)
             windowWidth = event.dict['w']
             windowHeight = event.dict['h']
-
         elif event.type == MOUSEBUTTONDOWN:
             mouseX, mouseY = event.pos
             mouseClicked = True
                 
-                
-
     return newChar, typeChar, deleteKey, returnKey, directionKey, windowWidth, windowHeight, mouseX, mouseY, mouseClicked
 
 
@@ -429,16 +359,12 @@ def getInput(windowWidth, windowHeight):
 ## The cursor's left position is always locked to the right of whatever
 ## stringRect it is next to.
 
-
-
 def getStringRect(string, lineNumber, camerax, cameray):
     stringRect = string.get_rect()
     stringRect.x = STARTX - camerax
     stringRect.y = STARTY + (lineNumber * (TEXTHEIGHT + (TEXTHEIGHT/4))) - cameray
 
     return stringRect
-
-
 
 def getStringAtInsertPoint(mainList, lineNumber, insertPoint):
     string = mainList[lineNumber]
@@ -465,7 +391,6 @@ def getStringRectAtInsertPoint(mainList, lineNumber, insertPoint, mainFont, came
     return stringRect
 
 
-
 ## Miscelaneous Functions.  getCursorRect is used to produce the
 ## cursors's rect object.
 
@@ -478,37 +403,30 @@ def getCursorRect(cursorX, cursorY, mainFont, camerax, cameray):
 
     return cursorRect
 
-
 def displayInfo(insertPoint, mainFont, cursorRect, camerax, windowWidth, windowHeight, displaySurf):
     number = mainFont.render(str(insertPoint), True, TEXTCOLOR, BGCOLOR)
     numbRect = number.get_rect()
     numbRect.bottom = windowHeight
     numbRect.right = windowWidth
-
     displaySurf.blit(number, numbRect)
 
     cursor = mainFont.render(str(cursorRect.x) + '  ', True, TEXTCOLOR, BGCOLOR)
     cursorNewRect = cursor.get_rect()
     cursorNewRect.bottom = windowHeight
     cursorNewRect.right = numbRect.left
-
     displaySurf.blit(cursor, cursorNewRect)
 
     cameraxRender = mainFont.render(str(camerax) + '    ', True, TEXTCOLOR, BGCOLOR)
     cameraRect = cameraxRender.get_rect()
     cameraRect.bottom = windowHeight
     cameraRect.right = cursorNewRect.left
-
     displaySurf.blit(cameraxRender, cameraRect)
 
     windowWidthRender = mainFont.render(str(windowWidth) + '    ', True, TEXTCOLOR, BGCOLOR)
     windowRect = windowWidthRender.get_rect()
     windowRect.bottom = windowHeight
     windowRect.right = cameraRect.left
-
     displaySurf.blit(windowWidthRender, windowRect)
-
-
 
 ## These three functions, setCursorToClick(), getLineNumberOfClick(), and
 ## get insertPointAtMouseX() allow the user to set the cursor location
@@ -516,8 +434,6 @@ def displayInfo(insertPoint, mainFont, cursorRect, camerax, windowWidth, windowH
 
 def setCursorToClick(mainList, cursorRect, mainFont, camerax, cameray, mouseX, mouseY):
     lineNumber = getLineNumberOfClick(mouseY, cameray, mainList)
-
-    
     insertPoint = getInsertPointAtMouseX(mouseX, mouseY, lineNumber, mainList, mainFont, camerax, cameray)
     stringRect = getStringRectAtInsertPoint(mainList, lineNumber, insertPoint, mainFont, camerax, cameray)
 
@@ -527,7 +443,6 @@ def setCursorToClick(mainList, cursorRect, mainFont, camerax, cameray, mouseX, m
         cursorRect.x = stringRect.right
         
     cursorRect.y = stringRect.top
-
 
     return insertPoint, lineNumber, cursorRect
 
@@ -544,19 +459,15 @@ def getLineNumberOfClick(mouseY, cameray, mainList):
 
 
 def getInsertPointAtMouseX(mouseX, mouseY, lineNumber, mainList, mainFont, camerax, cameray):
-
     string = mainList[lineNumber]
-
     newInsertPoint = 0
 
     if (mouseY + cameray) > ((lineNumber + 1) * (TEXTHEIGHT + TEXTHEIGHT/4)):
         insertPoint = len(mainList[lineNumber])
         return insertPoint
-
     
     for insertPoint in string:
         stringRect = getStringRectAtInsertPoint(mainList, lineNumber, newInsertPoint, mainFont, camerax, cameray)
-
         if mouseX >= stringRect.left:
             if mouseX < stringRect.right:
                 if newInsertPoint > 0:
@@ -568,9 +479,47 @@ def getInsertPointAtMouseX(mouseX, mouseY, lineNumber, mainList, mainFont, camer
         return newInsertPoint
 
 
+def saveAndLoadScreen():
+    saveFile = False
+    openFile = False
+    menuWidth  = windowWidth / 2
+    menuHeight = windowHeight / 2
 
+    menuRect = pygame.Rect(0, 0, menuWidth, menuHeight)
+
+    menuRect.centerx = displaySurf.centerx
+    menuRect.centery = displaySurf.centery
+
+    pygame.draw.rect(displaySurf, WHITE, menuRect)
+
+    messageRender, messageRect = getStringRenderAndRect('Press \'s\' to save, \'o\' to open, \'q\' to quit', mainFont)
+
+    messageRect.centerx = menuRect.centerx
+    messageRect.centery = menuRect.centery
+
+    displaySurf.blit(messageRender, messageRect)
+
+    pygame.display.update()
+
+    for event in pygame.event.get():
+        if event.type == QUIT:
+            pygame.quit()
+            sys.exit()
+        elif event.type == KEYDOWN:
+            if event.key == K_q:
+                pygame.quit()
+                sys.exit()
+            elif event.key == K_s:
+                saveFile = True
+            elif event.key == K_o:
+                openFile = True
 
     
+def getStringRenderAndRect(string, mainFont):
+    stringRender = mainFont.render(string, True, TEXTCOLOR, WHITE)
+    stringRect = stringRender.get_rect()
+
+    return stringRender, stringRect
 
 
 if __name__ == '__main__':
