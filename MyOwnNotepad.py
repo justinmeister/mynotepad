@@ -69,14 +69,24 @@ def main():
 ## necessary.
     
     while True:
+        
+        
         camerax, cameray = adjustCamera(mainList, lineNumber, insertPoint, cursorRect, mainFont, camerax, cameray, windowWidth, windowHeight)
+
         newChar, typeChar, deleteKey, returnKey, directionKey, windowWidth, windowHeight, mouseX, mouseY, mouseClicked = getInput(windowWidth, windowHeight)
+
+        if newChar == 'escape':
+            mainList = saveAndLoadScreen(mainList, windowWidth, windowHeight, displaySurf, mainFont)
+            newChar = False
+            insertPoint = 0
+            lineNumber = 0
+        
         mainList, lineNumber, insertPoint, cursorRect = displayText(mainFont, newChar, typeChar, mainList, deleteKey, returnKey, lineNumber, insertPoint, directionKey, camerax, cameray, cursorRect, windowWidth, windowHeight, displaySurf, mouseClicked, mouseX, mouseY)
+
         displayInfo(insertPoint, mainFont, cursorRect, camerax, windowWidth, windowHeight, displaySurf)
 
         pygame.display.update()
         FPSCLOCK.tick(FPS)
-
 
 
 ## Interprets user input and changes mainList, lineNumber, insertPoint
@@ -322,8 +332,7 @@ def getInput(windowWidth, windowHeight):
             if event.key == K_BACKSPACE:
                 deleteKey = True
             elif event.key == K_ESCAPE:
-                pygame.quit()
-                sys.exit()
+                newChar = 'escape'
             elif event.key == K_RETURN:
                 returnKey = True
             elif event.key == K_TAB:
@@ -479,28 +488,70 @@ def getInsertPointAtMouseX(mouseX, mouseY, lineNumber, mainList, mainFont, camer
         return newInsertPoint
 
 
-def saveAndLoadScreen():
+def saveAndLoadScreen(mainList, windowWidth, windowHeight, displaySurf, mainFont):
+    messageRender, messageRect = getStringRenderAndRect('Press \'s\' to save, \'o\' to open, \'q\' to quit', mainFont)
     saveFile = False
     openFile = False
-    menuWidth  = windowWidth / 2
-    menuHeight = windowHeight / 2
+    menuWidth  = messageRect.width + 20
+    menuHeight = messageRect.height * 2
+    displaySurfRect = displaySurf.get_rect()
 
     menuRect = pygame.Rect(0, 0, menuWidth, menuHeight)
-
-    menuRect.centerx = displaySurf.centerx
-    menuRect.centery = displaySurf.centery
-
+    menuRect.centerx = displaySurfRect.centerx
+    menuRect.centery = displaySurfRect.centery
     pygame.draw.rect(displaySurf, WHITE, menuRect)
 
-    messageRender, messageRect = getStringRenderAndRect('Press \'s\' to save, \'o\' to open, \'q\' to quit', mainFont)
+    menuBorderRect = menuRect
+    pygame.draw.rect(displaySurf, BLUE, menuBorderRect, 5)
 
     messageRect.centerx = menuRect.centerx
     messageRect.centery = menuRect.centery
-
     displaySurf.blit(messageRender, messageRect)
-
+    
     pygame.display.update()
 
+    while True:
+        saveFile, openFile = saveAndLoadInput()
+
+        if saveFile == True:
+            saveToDisk(mainList)
+            break
+        elif openFile == True:
+            newMainList = loadFromDisk()
+            return newMainList
+            
+
+    return mainList
+
+
+def saveToDisk(mainList):
+    saveFile = open('saveFile.txt', 'w')
+
+    for string in mainList:
+        saveFile.write(string + '\n')
+
+
+def loadFromDisk():
+    mainList = []
+    saveFile = open('saveFile.txt', 'r')
+
+    for line in saveFile:
+        mainList.append(line)
+
+    i = 0
+    while i < len(mainList):
+        stringList = list(mainList[i])
+        stringList.pop()
+        mainList[i] = ''.join(stringList)
+        i += 1
+
+    return mainList
+
+
+def saveAndLoadInput():
+    saveFile = False
+    openFile = False
+    
     for event in pygame.event.get():
         if event.type == QUIT:
             pygame.quit()
@@ -513,6 +564,8 @@ def saveAndLoadScreen():
                 saveFile = True
             elif event.key == K_o:
                 openFile = True
+                
+    return saveFile, openFile
 
     
 def getStringRenderAndRect(string, mainFont):
