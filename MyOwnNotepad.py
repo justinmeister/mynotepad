@@ -56,8 +56,11 @@ def main():
     mouseX       = 0
     mouseY       = 0
     
-    displaySurf = pygame.display.set_mode((windowWidth, windowHeight), RESIZABLE|DOUBLEBUF|HWSURFACE)    
+    displaySurf = pygame.display.set_mode((windowWidth, windowHeight), RESIZABLE)    
     displaySurf.fill(BGCOLOR)
+    displaySurf.convert()
+    pygame.display.update()
+    
     pygame.display.set_caption('Notepad')
     mainFont = pygame.font.SysFont('Helvetica', TEXTHEIGHT)
     
@@ -73,7 +76,7 @@ def main():
         
         camerax, cameray = adjustCamera(mainList, lineNumber, insertPoint, cursorRect, mainFont, camerax, cameray, windowWidth, windowHeight)
 
-        newChar, typeChar, deleteKey, returnKey, directionKey, windowWidth, windowHeight, mouseX, mouseY, mouseClicked = getInput(windowWidth, windowHeight)
+        newChar, typeChar, deleteKey, returnKey, directionKey, windowWidth, windowHeight, mouseX, mouseY, mouseClicked= getInput(windowWidth, windowHeight)
 
         if newChar == 'escape':
             mainList = saveAndLoadScreen(mainList, windowWidth, windowHeight, displaySurf, mainFont)
@@ -246,6 +249,7 @@ def displayText(mainFont, newChar, typeChar, mainList, deleteKey, returnKey, lin
 
     else:
         stringRect = getStringRectAtInsertPoint(mainList, lineNumber, insertPoint, mainFont, camerax, cameray)
+
         if insertPoint == 0:
             cursorRect.x = STARTX
         elif insertPoint > 0:
@@ -351,10 +355,15 @@ def getInput(windowWidth, windowHeight):
                 typeChar = True
 
         elif event.type == VIDEORESIZE:
-            displaySurf = pygame.display.set_mode(event.dict['size'], DOUBLEBUF|RESIZABLE)
-            displaySurf.fill(WHITE)
+            displaySurf = pygame.display.set_mode(event.dict['size'], RESIZABLE)
             windowWidth = event.dict['w']
             windowHeight = event.dict['h']
+            displaySurf.fill(WHITE)
+            displaySurf.convert()
+            pygame.display.update()
+            
+           
+            
         elif event.type == MOUSEBUTTONDOWN:
             mouseX, mouseY = event.pos
             mouseClicked = True
@@ -441,6 +450,7 @@ def displayInfo(insertPoint, mainFont, cursorRect, camerax, windowWidth, windowH
 ## get insertPointAtMouseX() allow the user to set the cursor location
 ## by clicking the mouse at the spot they want to go.
 
+
 def setCursorToClick(mainList, cursorRect, mainFont, camerax, cameray, mouseX, mouseY):
     lineNumber = getLineNumberOfClick(mouseY, cameray, mainList)
     insertPoint = getInsertPointAtMouseX(mouseX, mouseY, lineNumber, mainList, mainFont, camerax, cameray)
@@ -492,8 +502,8 @@ def saveAndLoadScreen(mainList, windowWidth, windowHeight, displaySurf, mainFont
     messageRender, messageRect = getStringRenderAndRect('Press \'s\' to save, \'o\' to open, \'q\' to quit', mainFont)
     saveFile = False
     openFile = False
-    menuWidth  = messageRect.width + 20
-    menuHeight = messageRect.height * 2
+    menuWidth  = windowWidth * .75
+    menuHeight = windowHeight * .4
     displaySurfRect = displaySurf.get_rect()
 
     menuRect = pygame.Rect(0, 0, menuWidth, menuHeight)
@@ -514,29 +524,112 @@ def saveAndLoadScreen(mainList, windowWidth, windowHeight, displaySurf, mainFont
         saveFile, openFile = saveAndLoadInput()
 
         if saveFile == True:
-            saveToDisk(mainList)
+            saveString = 'Please enter the directory you wish to save to.'
+            saveMessage, saveMessageRect, entryBoxRect = createMenuBox(saveString, mainFont, displaySurf, menuRect, menuBorderRect, menuWidth)
+            saveDirectory = False
+            directoryString = ''
+            
+            while saveDirectory == False:
+                saveDirectory, directoryString = directoryInput(displaySurf, directoryString, mainFont, menuRect, menuBorderRect, saveMessage, saveMessageRect, entryBoxRect, saveDirectory)
+                
+            saveToDisk(mainList, saveDirectory)
             break
+        
         elif openFile == True:
-            newMainList = loadFromDisk()
+            loadString = 'Please enter the directory you wish to load from.'
+            loadMessage, loadMessageRect, entryBoxRect = createMenuBox(loadString, mainFont, displaySurf, menuRect, menuBorderRect, menuWidth)
+            loadDirectory = False
+            directoryString = ''
+
+            while loadDirectory == False:
+                loadDirectory, directoryString = directoryInput(displaySurf, directoryString, mainFont, menuRect, menuBorderRect, loadMessage, loadMessageRect, entryBoxRect, loadDirectory)
+
+                
+            newMainList = loadFromDisk(loadDirectory)
             return newMainList
             
 
     return mainList
 
 
-def saveToDisk(mainList):
-    saveFile = open('saveFile.txt', 'w')
+def createMenuBox(messageString, mainFont, displaySurf, menuRect, menuBorderRect, menuWidth):
+    message, messageRect = getStringRenderAndRect(messageString, mainFont)
+    pygame.draw.rect(displaySurf, WHITE, menuRect)
+    pygame.draw.rect(displaySurf, BLUE, menuBorderRect, 5)
+    messageRect.centerx = menuRect.centerx
+    messageRect.y = menuRect.y + 20
+
+    displaySurf.blit(message, messageRect)
+
+    entryBoxRect = pygame.Rect(0, 0, menuWidth - 10, TEXTHEIGHT+10)
+
+    displayRect = displaySurf.get_rect()
+    entryBoxRect.centerx = displayRect.centerx
+    entryBoxRect.centery = displayRect.centery
+    pygame.draw.rect(displaySurf, BLACK, entryBoxRect, 1)
+    pygame.display.update()
+
+    return message, messageRect, entryBoxRect
+    
+
+def directoryInput(displaySurf, directoryString, mainFont, menuRect, menuBorderRect, message, messageRect, entryBoxRect, saveOrLoadDirectory):
+    directoryList = ''.join(directoryString)
+
+    for event in pygame.event.get():
+
+        if event.type == QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE):
+            pygame.quit()
+            sys.exit()
+
+        elif event.type == KEYDOWN:
+            if event.key == K_RETURN:
+                saveOrLoadDirectory = directoryString
+            elif event.key == K_BACKSPACE:
+                if directoryList:
+                    if len(directoryList) > 0:
+                        directoryList = list(directoryString)
+                        directoryList.pop()
+                        directoryString = ''.join(directoryList)
+                    
+            else:
+                newChar = event.unicode
+                directoryList = list(directoryString)
+                directoryList.append(newChar)
+                directoryString = ''.join(directoryList)
+                newChar = False
+                saveOrLoadDirectory = False
+
+    directRender, directRect = getStringRenderAndRect(directoryString, mainFont)
+    directRect.x = entryBoxRect.x + 4
+    directRect.y = entryBoxRect.y + 2
+    
+    pygame.draw.rect(displaySurf, WHITE, menuRect)
+    pygame.draw.rect(displaySurf, BLUE, menuBorderRect, 5)
+    pygame.draw.rect(displaySurf, BLACK, entryBoxRect, 1)
+    displaySurf.blit(message, messageRect)
+    displaySurf.blit(directRender, directRect)
+    pygame.display.update()
+
+    return saveOrLoadDirectory, directoryString
+
+
+def saveToDisk(mainList, saveDirectory):
+    saveFile = open(saveDirectory, 'w')
 
     for string in mainList:
         saveFile.write(string + '\n')
 
+    saveFile.close()
 
-def loadFromDisk():
+
+def loadFromDisk(loadDirectory):
     mainList = []
-    saveFile = open('saveFile.txt', 'r')
+    saveFile = open(loadDirectory, 'r')
 
     for line in saveFile:
         mainList.append(line)
+
+    saveFile.close()
 
     i = 0
     while i < len(mainList):
