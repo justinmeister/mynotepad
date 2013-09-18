@@ -499,10 +499,10 @@ def getInsertPointAtMouseX(mouseX, mouseY, lineNumber, mainList, mainFont, camer
 
 
 def saveAndLoadScreen(mainList, windowWidth, windowHeight, displaySurf, mainFont):
-    messageRender, messageRect = getStringRenderAndRect('Press \'s\' to save, \'o\' to open, \'q\' to quit', mainFont)
+    messageRender, messageRect = getStringRenderAndRect('Press \'s\' to save, \'o\' to open, \'q\' to quit and \'r\' to continue typing' , mainFont)
     saveFile = False
     openFile = False
-    menuWidth  = windowWidth * .75
+    menuWidth  = windowWidth * .94
     menuHeight = windowHeight * .4
     displaySurfRect = displaySurf.get_rect()
 
@@ -521,7 +521,7 @@ def saveAndLoadScreen(mainList, windowWidth, windowHeight, displaySurf, mainFont
     pygame.display.update()
 
     while True:
-        saveFile, openFile = saveAndLoadInput()
+        saveFile, openFile, continueTyping = saveAndLoadInput()
 
         if saveFile == True:
             saveString = 'Please enter the directory you wish to save to.'
@@ -547,6 +547,9 @@ def saveAndLoadScreen(mainList, windowWidth, windowHeight, displaySurf, mainFont
                 
             newMainList = loadFromDisk(loadDirectory)
             return newMainList
+
+        elif continueTyping == True:
+            break
             
 
     return mainList
@@ -644,6 +647,7 @@ def loadFromDisk(loadDirectory):
 def saveAndLoadInput():
     saveFile = False
     openFile = False
+    continueTyping = False
     
     for event in pygame.event.get():
         if event.type == QUIT:
@@ -657,8 +661,10 @@ def saveAndLoadInput():
                 saveFile = True
             elif event.key == K_o:
                 openFile = True
+            elif event.key == K_r:
+                continueTyping = True
                 
-    return saveFile, openFile
+    return saveFile, openFile, continueTyping
 
     
 def getStringRenderAndRect(string, mainFont):
