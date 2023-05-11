@@ -30,8 +30,8 @@ CYAN     = (  0, 255, 255)
 BLACK    = (  0,   0,   0)
 COMBLUE  = (233, 232, 255)
 
-BGCOLOR = WHITE
-TEXTCOLOR = BLACK
+BGCOLOR = BLACK
+TEXTCOLOR = ORANGE
 
 
 def main():
