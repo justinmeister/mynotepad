@@ -3,8 +3,8 @@ from pygame.locals import*
 
 ## CONSTANTS, yo ## 
 
-DISPLAYWIDTH  = 640
-DISPLAYHEIGHT = 480
+DISPLAYWIDTH  = 700
+DISPLAYHEIGHT = 500
 FPS          = 30
 TEXTHEIGHT   = 20
 STARTX       = 0
